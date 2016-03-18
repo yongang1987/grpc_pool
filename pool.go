@@ -34,6 +34,15 @@ func NewGrpcPool(addr []string, maxActive int, maxIdle int, timeout time.Duratio
 			MaxActive:   maxActive,
 			MaxIdle:     maxIdle,
 			IdleTimeout: timeout,
+			TestOnBorrow: func(v interface{}, t time.Time) error {
+				cli := v.(*Client)
+				cli.mutex.Lock()
+				defer cli.mutex.Unlock()
+				if cli.closed {
+					return ClientClosedError
+				}
+				return nil
+			},
 		},
 	}
 }
